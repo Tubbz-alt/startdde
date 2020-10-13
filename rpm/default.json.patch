@@ -1,11 +1,11 @@
---- default.json	2020-09-14 15:38:38.520969835 +0800
-+++ default1.json	2020-09-24 20:35:17.139362540 +0800
-@@ -13,7 +13,7 @@
-     "Priority": 9,
+--- default.json	2020-10-12 17:23:22.494221927 +0800
++++ 2.json	2020-10-12 17:35:58.942292764 +0800
+@@ -3,7 +3,7 @@
+     "Priority": 7,
      "Group": [
        {
--        "Command": "/usr/lib/deepin-daemon/dde-session-daemon",
-+        "Command": "/usr/libexec/deepin-daemon/dde-session-daemon",
-         "Wait": true,
-         "Args": []
+-        "Command": "/usr/lib/polkit-1-dde/dde-polkit-agent",
++        "Command": "/usr/libexec/polkit-1-dde/dde-polkit-agent",
+         "Wait": false
        },
+       {
