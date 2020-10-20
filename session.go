@@ -46,7 +46,7 @@ import (
 	"pkg.deepin.io/dde/startdde/wm_kwin"
 	"pkg.deepin.io/dde/startdde/xcursor"
 	"pkg.deepin.io/dde/startdde/xsettings"
-	"pkg.deepin.io/gir/gio-2.0"
+	gio "pkg.deepin.io/gir/gio-2.0"
 	"pkg.deepin.io/lib/cgroup"
 	"pkg.deepin.io/lib/dbusutil"
 	"pkg.deepin.io/lib/keyfile"
@@ -80,7 +80,7 @@ type SessionManager struct {
 	sigLoop               *dbusutil.SignalLoop
 	inhibitManager        InhibitManager
 
-	CurrentSessionPath      dbus.ObjectPath
+	CurrentSessionPath dbus.ObjectPath
 
 	//nolint
 	signals *struct {
@@ -926,7 +926,7 @@ func sendMsgToUserExperModule(msg string) {
 			} else {
 				logger.Infof("send %s message to ue module", msg)
 			}
-			ch <- struct{}{}
+			close(ch)
 		}()
 		select {
 		case <-ch:
@@ -936,7 +936,6 @@ func sendMsgToUserExperModule(msg string) {
 	} else {
 		logger.Warning(err)
 	}
-	close(ch)
 }
 
 func (m *SessionManager) start(conn *x.Conn, sysSignalLoop *dbusutil.SignalLoop, service *dbusutil.Service) *SessionManager {
@@ -1155,7 +1154,7 @@ func doLogout(force bool) {
 
 const (
 	atSpiService = "at-spi-dbus-bus.service"
-	obexService = "obex.service"
+	obexService  = "obex.service"
 )
 
 // start at-spi-dbus-bus.service
