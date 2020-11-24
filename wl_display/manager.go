@@ -170,7 +170,7 @@ func newManager(service *dbusutil.Service) *Manager {
 		}
 		m.updatePropMonitors()
 	}
-
+        m.initPrimary()
 	m.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, 10)
 	m.sessionSigLoop.Start()
 	m.listenDBusSignals()
@@ -281,8 +281,8 @@ func (m *Manager) listenDBusSignals() {
 }
 
 func (m *Manager) checkKwinMonitorData(monitor *Monitor, outputInfo *KOutputInfo) bool {
-	if monitor.X == int16(outputInfo.X) && monitor.Y == int16(outputInfo.Y) &&
-		monitor.Width == uint16(outputInfo.Width) && monitor.Height == uint16(outputInfo.Height) {
+	if monitor.Enabled == false ||(monitor.X == int16(outputInfo.X) && monitor.Y == int16(outputInfo.Y) &&
+		monitor.Width == uint16(outputInfo.Width) && monitor.Height == uint16(outputInfo.Height)) {
 		return true
 	} else {
 		logger.Warning("kwin data error [monitor uuid]: ", outputInfo.Uuid)
@@ -1177,7 +1177,11 @@ func (m *Manager) switchModeCustom(name string) (err error) {
 			return
 		}
 	}
-
+	realMode, _ := m.GetRealDisplayMode()
+	if realMode == DisplayModeExtend {
+		logger.Info("GetRealDisplayMode DisplayModeExtend")
+		m.SetCustomDisplayMode(DisplayModeExtend)
+	}
 	screenCfg.setMonitorConfigs(DisplayModeCustom, name,
 		toMonitorConfigs(m.getConnectedMonitors(), m.Primary))
 
@@ -1703,3 +1707,46 @@ func (m *Manager) AdjustPositonAfterSetMode() Monitors {
 	return monitors
 
 }
+
+func (m *Manager) initPrimary() {
+	logger.Info("initPrimary-get mode", m.DisplayMode)
+	var find bool = false
+	var defaultName string = ""
+	var builtInName string = ""
+	var vgaName string = ""
+	var hdmiName string = ""
+	m.Primary = m.primarysettings.GetString("primary-monitor-name")
+	logger.Debug("primary==>", m.Primary)
+	monitors := m.getConnectedMonitors()
+	for _, monitor := range monitors {
+	    if monitor.Name == m.Primary {
+		find = true
+		logger.Debug("primary==>same", m.Primary)
+		break
+	    }
+	    name := strings.ToLower(monitor.Name)
+	    if strings.HasPrefix(name, "hdmi") {
+		hdmiName = monitor.Name
+	    } else if strings.HasPrefix(name, "vga") {
+		vgaName = monitor.Name
+	    } else if strings.HasPrefix(name, "edp") {
+		builtInName = monitor.Name
+	    } else {
+		defaultName = monitor.Name
+	    }
+	}
+	if find == false {
+	    if builtInName != "" {
+	        m.Primary = defaultName
+	    } else if hdmiName != "" {
+		m.Primary = hdmiName
+	    } else if vgaName != "" {
+		m.Primary = vgaName
+	    } else {
+		m.Primary = defaultName
+	    }
+	    logger.Debug("PrimaryName==>", m.Primary)
+	}
+	return
+}
+
