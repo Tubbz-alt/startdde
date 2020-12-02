@@ -171,7 +171,7 @@ func newManager(service *dbusutil.Service) *Manager {
 		}
 		m.updatePropMonitors()
 	}
-        m.initPrimary()
+	m.initPrimary()
 	m.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, 10)
 	m.sessionSigLoop.Start()
 	m.listenDBusSignals()
@@ -180,6 +180,8 @@ func newManager(service *dbusutil.Service) *Manager {
 	logger.Debugf("monitorsId: %q, monitorMap: %v", m.monitorsId, m.monitorMap)
 	m.recommendScaleFactor = m.calcRecommendedScaleFactor()
 	m.updateScreenSize()
+
+
 
 	//m.config = loadConfig()
 	m.CustomIdList = m.getCustomIdList()
@@ -968,7 +970,7 @@ func (m *Manager) switchModeExtend(primary string) (err error) {
 	screenCfg := m.getScreenConfig()
 	configs := screenCfg.getMonitorConfigs(DisplayModeExtend, "")
 
-	var xOffset int
+	var xOffset int = 0
 	var monitor0 *Monitor
 	for _, monitor := range monitors {
 		if monitor.Connected {
@@ -977,25 +979,31 @@ func (m *Manager) switchModeExtend(primary string) (err error) {
 			cfg := getMonitorConfigByUuid(configs, monitor.uuid)
 			var mode ModeInfo
 			if cfg != nil {
-			    mode = monitor.selectMode(cfg.Width, cfg.Height, cfg.RefreshRate)
-			    if monitor0 == nil && cfg.Primary {
-			    monitor0 = monitor
-			    }
+				mode = monitor.selectMode(cfg.Width, cfg.Height, cfg.RefreshRate)
+				if monitor0 == nil && cfg.Primary {
+					monitor0 = monitor
+				}
 
 			} else {
-			    mode = monitor.BestMode
+				mode = monitor.BestMode
 			}
 
 			monitor.setMode(mode)
 
-			if xOffset > math.MaxInt16 {
-				xOffset = math.MaxInt16
+			if cfg != nil {
+				monitor.setPosition(cfg.X, 0)
+				logger.Debug("setPosition from config ", cfg.X)
+			} else {
+                         	if xOffset > math.MaxInt16 {
+				    xOffset = math.MaxInt16
+			        }
+				logger.Debug("setPosition ---- sxOffset", xOffset)
+				monitor.setPosition(int16(xOffset), 0)
+				xOffset += int(monitor.Width)
 			}
-			monitor.setPosition(int16(xOffset), 0)
 			monitor.setRotation(randr.RotationRotate0)
 			monitor.setReflect(0)
 
-			xOffset += int(monitor.Width)
 		} else {
 			monitor.enable(false)
 		}
@@ -1028,6 +1036,7 @@ func (m *Manager) switchModeExtend(primary string) (err error) {
 
 	return
 }
+
 
 func (m *Manager) getScreenConfig() *ScreenConfig {
 	id := m.getMonitorsId()
